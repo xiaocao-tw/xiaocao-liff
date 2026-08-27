@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美好台灣小草推廣協會 活動報名</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --teal:#2FAFB0; --yellow:#F5C520; --cream:#FBF3DE; --belly:#F6E9C1; --ink:#26241D;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:0; background:var(--cream); color:var(--ink);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  }
+  header {
+    background:var(--teal); color:#fff; padding:20px 20px 16px;
+    font-weight:900; font-size:20px; letter-spacing:1px;
+  }
+  main { padding:16px; max-width:520px; margin:0 auto; }
+  .card {
+    background:#fff; border-radius:14px; padding:18px; margin-bottom:16px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  }
+  label { display:block; font-weight:700; margin:14px 0 6px; font-size:14px; }
+  label.required::after { content:" *"; color:#d0342c; }
+  select, input[type=text], input[type=tel], textarea {
+    width:100%; padding:10px 12px; border:1px solid #ddd3b8; border-radius:8px;
+    font-size:15px; font-family:inherit; background:#fffdf7;
+  }
+  textarea { min-height:70px; resize:vertical; }
+  .hint { font-size:12px; color:#8a8264; margin-top:4px; }
+  .radio-group label { font-weight:400; display:inline-flex; align-items:center; gap:6px; margin-right:16px; }
+  .activity-meta { font-size:13px; background:var(--belly); border-radius:8px; padding:10px 12px; margin-top:8px; line-height:1.6; }
+  #paymentMethods label { font-weight:400; display:flex; align-items:center; gap:8px; padding:9px 0; margin:0; border-bottom:1px dashed #eee; }
+  #paymentMethods label:last-child { border-bottom:none; }
+  #feePreview { display:none; margin-top:14px; font-weight:900; color:var(--teal); font-size:16px; }
+  .btn {
+    width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; font-weight:900;
+    background:var(--teal); color:#fff; cursor:pointer; margin-top:8px;
+  }
+  .btn:disabled { background:#bcbcbc; }
+  a.btn { display:block; text-align:center; text-decoration:none; line-height:1.5; }
+  .msg { padding:12px; border-radius:8px; font-size:14px; margin-top:12px; }
+  .msg.error { background:#fdeceb; color:#b3261e; }
+  .msg.ok { background:#eaf7ee; color:#1e7a37; }
+  .pay-card { display:none; }
+  .pay-card .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #ddd3b8; font-size:14px; }
+  .pay-card .row span:first-child { color:#8a8264; }
+  .pay-card .amount { font-size:26px; font-weight:900; color:var(--teal); text-align:center; margin:10px 0; }
+  #done-view { display:none; text-align:center; padding:30px 10px; }
+  #done-view .icon { font-size:48px; }
+  #form-view.hidden, #loading.hidden { display:none; }
+</style>
+</head>
+<body>
+
+<header>美好台灣小草推廣協會・活動報名</header>
+
+<main>
+  <div id="loading" class="card">載入中,請稍候...</div>
+
+  <div id="form-view" class="hidden">
+    <div class="card">
+      <label class="required">選擇活動</label>
+      <select id="activityId"></select>
+      <div id="activityMeta" class="activity-meta" style="display:none;"></div>
+    </div>
+
+    <div class="card">
+      <label>LINE 顯示名稱</label>
+      <input type="text" id="displayName" disabled>
+
+      <label class="required">姓名</label>
+      <input type="text" id="name" placeholder="請輸入真實姓名">
+
+      <label class="required">聯絡電話</label>
+      <input type="tel" id="phone" placeholder="09xxxxxxxx">
+
+      <label class="required">身份別</label>
+      <select id="role">
+        <option value="萌蛙志工">萌蛙志工</option>
+        <option value="協會會員">協會會員</option>
+        <option value="民眾黨黨員">民眾黨黨員</option>
+        <option value="一般民眾">一般民眾</option>
+      </select>
+
+      <!-- 單一票價活動:顯示一個「參加人數」 -->
+      <div id="singleCountBlock">
+        <label class="required">參加人數</label>
+        <input type="text" id="count" value="1" inputmode="numeric">
+      </div>
+
+      <!-- 分齡票價活動:顯示大人 / 優待兩個人數 -->
+      <div id="tierBlock" style="display:none;">
+        <label class="required" id="labelAdult">全票 人數</label>
+        <input type="text" id="countAdult" value="0" inputmode="numeric">
+        <label class="required" id="labelChild">優待票 人數</label>
+        <input type="text" id="countChild" value="0" inputmode="numeric">
+      </div>
+
+      <!-- 收費活動:顯示付款方式選擇 -->
+      <div id="paymentMethodBlock" style="display:none;">
+        <label class="required">付款方式</label>
+        <div id="paymentMethods"></div>
+      </div>
+
+      <div id="feePreview"></div>
+
+      <label>備註</label>
+      <textarea id="note" placeholder="有特殊需求或想補充的都可以寫在這裡"></textarea>
+    </div>
+
+    <button class="btn" id="submitBtn">送出報名</button>
+    <div id="formMsg"></div>
+  </div>
+
+  <!-- 送出後:銀行轉帳 -->
+  <div id="transfer-block" class="card pay-card">
+    <h3>請完成銀行轉帳</h3>
+    <div class="amount" id="tfAmount"></div>
+    <div class="row"><span>銀行</span><span id="tfBank"></span></div>
+    <div class="row"><span>戶名</span><span id="tfAccountName"></span></div>
+    <div class="row"><span>帳號</span><span id="tfAccountNumber"></span></div>
+    <div class="row"><span>繳費期限</span><span id="tfDeadline"></span></div>
+    <div class="hint" style="margin-top:10px;">轉帳後請將「轉帳截圖或帳號後五碼」回傳到協會 LINE,方便核對。備註請填「姓名+電話末3碼」。</div>
+  </div>
+
+  <!-- 送出後:LINE Pay(加好友付款) -->
+  <div id="linepay-block" class="card pay-card">
+    <h3>請用 LINE Pay 付款</h3>
+    <div class="amount" id="lpAmount"></div>
+    <p style="font-size:14px;">請先加下方 LINE 好友,再用 <strong>LINE Pay</strong> 將款項付給對方。</p>
+    <a id="lpLink" class="btn" href="#" target="_blank" rel="noopener">➕ 加 LINE 好友付款</a>
+    <div class="hint" id="lpDeadline" style="margin-top:10px;"></div>
+    <div class="hint">付款時請備註「姓名+電話末3碼」,方便協會核對。</div>
+  </div>
+
+  <!-- 送出後:現場付款 -->
+  <div id="onsite-block" class="card pay-card" style="text-align:center;">
+    <div style="font-size:44px;">📝</div>
+    <h3>報名成功!</h3>
+    <div class="amount" id="osAmount"></div>
+    <p style="font-size:14px;">本場次選擇 <strong>現場付款</strong>,請於活動當天現場繳費,系統已記錄您的報名。</p>
+  </div>
+
+  <!-- 送出後:免費活動 -->
+  <div id="done-view">
+    <div class="icon">✅</div>
+    <h3>報名成功！</h3>
+    <p id="doneText">活動前我們會透過 LINE 通知您相關細節。</p>
+  </div>
+</main>
+
+<script>
+  // ====== 請填入您的設定 ======
+  var LIFF_ID = '2011286024-gyENTSmL';          // 從 LINE Developers 的 LIFF 分頁複製
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwe9-WFZqJqpzdgR_Y5xABdp8WJ2NRUqJSK9E_HDNHwToseHqPhVk_xpKq5A6YSYrYv/exec';  // Google Apps Script 部署後的網址
+  // ============================
+
+  var profile = { userId: '', displayName: '' };
+  var activities = [];
+  var selectedActivity = null;
+
+  function $(id) { return document.getElementById(id); }
+  function isTrue(v) { return String(v).toUpperCase() === 'TRUE'; }
+  function isCharged(a) { return !!a && isTrue(a.是否收費); }
+  function isTiered(a) { return isCharged(a) && a.優待票說明 != null && String(a.優待票說明).trim() !== ''; }
+
+  function paymentMethods(a) {
+    var raw = (a && a.付款方式) ? String(a.付款方式) : '';
+    var tokens = raw.split(/[、,，\/\s]+/).filter(Boolean);
+    var out = [];
+    function push(v, label) { if (!out.some(function (x) { return x.value === v; })) out.push({ value: v, label: label }); }
+    tokens.forEach(function (t) {
+      if (t.toLowerCase().indexOf('line') >= 0) push('LinePay', 'LINE Pay(加好友付款)');
+      else if (t.indexOf('轉') >= 0) push('轉帳', '銀行轉帳');
+      else if (t.indexOf('現') >= 0) push('現場', '現場付款');
+    });
+    return out;
+  }
+
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+    return liff.getProfile();
+  }).then(function (p) {
+    if (!p) return;
+    profile = p;
+    $('displayName').value = p.displayName;
+    loadActivities();
+  }).catch(function (err) {
+    $('loading').innerText = '初始化失敗,請確認是否從LINE開啟此頁面。錯誤訊息:' + err.message;
+  });
+
+  function loadActivities() {
+    fetch(API_URL + '?action=activities')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        activities = data;
+        var sel = $('activityId');
+        sel.innerHTML = '';
+        activities.forEach(function (a) {
+          var opt = document.createElement('option');
+          opt.value = a.活動ID;
+          opt.textContent = a.活動名稱 + (isCharged(a) ? '' : '(免費)');
+          sel.appendChild(opt);
+        });
+        sel.addEventListener('change', renderActivity);
+        renderActivity();
+        $('loading').classList.add('hidden');
+        $('form-view').classList.remove('hidden');
+      })
+      .catch(function () {
+        $('loading').innerText = '活動資料載入失敗,請稍後再試一次。';
+      });
+  }
+
+  function renderActivity() {
+    var id = $('activityId').value;
+    selectedActivity = activities.filter(function (a) { return String(a.活動ID) === String(id); })[0];
+    if (!selectedActivity) return;
+    var a = selectedActivity;
+
+    var feeText;
+    if (!isCharged(a)) feeText = '免費';
+    else if (isTiered(a)) feeText = (a.全票說明 || '全票') + ' $' + a.全票費用 + ' / ' + (a.優待票說明 || '優待票') + ' $' + a.優待票費用;
+    else feeText = '每人 $' + a.全票費用;
+
+    var slotText = (a.剩餘名額 === null || a.剩餘名額 === undefined || a.剩餘名額 === '') ? '不限名額' : ('剩餘 ' + a.剩餘名額 + ' 位');
+
+    $('activityMeta').innerHTML =
+      '日期時間:' + (a.日期時間說明 || '') + '<br>' +
+      '地點:' + (a.地點 || '') + '<br>' +
+      (a.說明 ? ('說明:' + a.說明 + '<br>') : '') +
+      '費用:' + feeText + '<br>' +
+      '名額:' + slotText;
+    $('activityMeta').style.display = 'block';
+
+    renderQuantityInputs();
+    renderPaymentMethods();
+    updateFeePreview();
+  }
+
+  function renderQuantityInputs() {
+    var a = selectedActivity;
+    if (isTiered(a)) {
+      $('singleCountBlock').style.display = 'none';
+      $('tierBlock').style.display = 'block';
+      $('labelAdult').textContent = (a.全票說明 || '全票') + ' 人數';
+      $('labelChild').textContent = (a.優待票說明 || '優待票') + ' 人數';
+    } else {
+      $('singleCountBlock').style.display = 'block';
+      $('tierBlock').style.display = 'none';
+    }
+  }
+
+  function renderPaymentMethods() {
+    var a = selectedActivity;
+    var block = $('paymentMethodBlock');
+    var container = $('paymentMethods');
+    container.innerHTML = '';
+    if (!isCharged(a)) { block.style.display = 'none'; return; }
+    var methods = paymentMethods(a);
+    if (methods.length === 0) methods = [{ value: '轉帳', label: '銀行轉帳' }];
+    methods.forEach(function (m, i) {
+      var lbl = document.createElement('label');
+      lbl.innerHTML = '<input type="radio" name="paymentMethod" value="' + m.value + '"' + (i === 0 ? ' checked' : '') + '> ' + m.label;
+      container.appendChild(lbl);
+    });
+    block.style.display = 'block';
+  }
+
+  function getQuantities() {
+    var a = selectedActivity;
+    if (isTiered(a)) {
+      var adult = Number($('countAdult').value || 0);
+      var child = Number($('countChild').value || 0);
+      return { adult: adult, child: child, total: adult + child };
+    }
+    var c = Number($('count').value || 0);
+    return { adult: c, child: 0, total: c };
+  }
+
+  function calcFee() {
+    var a = selectedActivity;
+    if (!isCharged(a)) return 0;
+    var q = getQuantities();
+    return q.adult * Number(a.全票費用 || 0) + q.child * Number(a.優待票費用 || 0);
+  }
+
+  function updateFeePreview() {
+    var el = $('feePreview');
+    if (!isCharged(selectedActivity)) { el.style.display = 'none'; return; }
+    el.textContent = '預估應繳金額:$' + calcFee();
+    el.style.display = 'block';
+  }
+
+  ['count', 'countAdult', 'countChild'].forEach(function (id) {
+    $(id).addEventListener('input', updateFeePreview);
+  });
+
+  $('submitBtn').addEventListener('click', function () {
+    var name = $('name').value.trim();
+    var phone = $('phone').value.trim();
+
+    if (!selectedActivity) { showMsg('請選擇活動', 'error'); return; }
+    if (!name) { showMsg('請填寫姓名', 'error'); return; }
+    if (!phone) { showMsg('請填寫聯絡電話', 'error'); return; }
+
+    var q = getQuantities();
+    if (!q.total || q.total < 1) { showMsg('參加人數請填寫至少1人', 'error'); return; }
+
+    var method = '';
+    if (isCharged(selectedActivity)) {
+      var pm = document.querySelector('input[name=paymentMethod]:checked');
+      if (!pm) { showMsg('請選擇付款方式', 'error'); return; }
+      method = pm.value;
+    }
+
+    var fd = new FormData();
+    fd.append('activityId', selectedActivity.活動ID);
+    fd.append('userId', profile.userId);
+    fd.append('displayName', profile.displayName);
+    fd.append('name', name);
+    fd.append('phone', phone);
+    fd.append('role', $('role').value);
+    fd.append('countAdult', q.adult);
+    fd.append('countChild', q.child);
+    fd.append('paymentMethod', method);
+    fd.append('note', $('note').value.trim());
+
+    $('submitBtn').disabled = true;
+    $('submitBtn').textContent = '送出中...';
+
+    fetch(API_URL, { method: 'POST', body: fd })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.status !== 'success') {
+          showMsg(data.message || '送出失敗,請稍後再試', 'error');
+          $('submitBtn').disabled = false;
+          $('submitBtn').textContent = '送出報名';
+          return;
+        }
+        $('form-view').classList.add('hidden');
+        if (!data.needPayment) {
+          $('doneText').textContent = '活動前我們會透過 LINE 通知您相關細節。';
+          $('done-view').style.display = 'block';
+        } else if (data.method === '轉帳' && data.transfer) {
+          $('tfAmount').textContent = '應繳金額 $' + data.amount;
+          $('tfBank').textContent = data.transfer.bank;
+          $('tfAccountName').textContent = data.transfer.accountName;
+          $('tfAccountNumber').textContent = data.transfer.accountNumber;
+          $('tfDeadline').textContent = data.transfer.deadline;
+          $('transfer-block').style.display = 'block';
+        } else if (data.method === 'LinePay' && data.linepay) {
+          $('lpAmount').textContent = '應付金額 $' + data.amount;
+          $('lpLink').href = 'https://line.me/ti/p/~' + data.linepay.lineId;
+          $('lpDeadline').textContent = '繳費期限:' + data.linepay.deadline;
+          $('linepay-block').style.display = 'block';
+        } else if (data.method === '現場') {
+          $('osAmount').textContent = '現場應繳 $' + data.amount;
+          $('onsite-block').style.display = 'block';
+        } else {
+          $('doneText').textContent = '我們已收到您的報名,將透過 LINE 通知後續。';
+          $('done-view').style.display = 'block';
+        }
+      })
+      .catch(function () {
+        showMsg('網路發生問題,請稍後再試一次', 'error');
+        $('submitBtn').disabled = false;
+        $('submitBtn').textContent = '送出報名';
+      });
+  });
+
+  function showMsg(text, type) {
+    $('formMsg').innerHTML = '<div class="msg ' + type + '">' + text + '</div>';
+  }
+</script>
+
+</body>
+</html>
