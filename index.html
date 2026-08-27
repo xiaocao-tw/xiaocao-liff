@@ -149,7 +149,6 @@
   <div id="done-view">
     <div class="icon">✅</div>
     <h3>報名成功！</h3>
-    <p id="doneText">活動前我們會透過 LINE 通知您相關細節。</p>
   </div>
 </main>
 
@@ -347,7 +346,6 @@
         }
         $('form-view').classList.add('hidden');
         if (!data.needPayment) {
-          $('doneText').textContent = '活動前我們會透過 LINE 通知您相關細節。';
           $('done-view').style.display = 'block';
         } else if (data.method === '轉帳' && data.transfer) {
           $('tfAmount').textContent = '應繳金額 $' + data.amount;
@@ -365,7 +363,6 @@
           $('osAmount').textContent = '現場應繳 $' + data.amount;
           $('onsite-block').style.display = 'block';
         } else {
-          $('doneText').textContent = '我們已收到您的報名,將透過 LINE 通知後續。';
           $('done-view').style.display = 'block';
         }
       })
