@@ -64,6 +64,14 @@
 <main>
   <div id="loading" class="card">載入中,請稍候...</div>
 
+  <div id="friend-gate" class="card hidden" style="text-align:center;">
+    <div style="font-size:46px;">🐸</div>
+    <h3 style="margin:12px 0 6px;">報名前,請先加入官方帳號</h3>
+    <p style="font-size:14px; color:#5f5a48; line-height:1.75;">加入「美好台灣小草推廣協會」LINE 官方帳號後才能報名,也方便我們透過 LINE 通知你活動細節。</p>
+    <a class="btn" href="https://lin.ee/oovKr6B" target="_blank" rel="noopener">➕ 加入官方帳號好友</a>
+    <button class="btn" id="recheckBtn" style="background:#8a8264;">我已加入,點此繼續報名</button>
+  </div>
+
   <div id="form-view" class="hidden">
     <div class="card">
       <div class="sec-title">選擇活動 <small>(可複選,能同時報名多個場次)</small></div>
@@ -138,14 +146,33 @@
     return out;
   }
 
+  function checkFriendship() {
+    if (!liff.getFriendship) return Promise.resolve(true); // 舊版 LIFF 無此 API → 放行
+    return liff.getFriendship().then(function (fs) {
+      return (fs && fs.friendFlag === true);
+    }).catch(function () {
+      return true; // 查詢失敗(通常是 Login channel 尚未綁定官方帳號)→ 放行,避免所有人被卡住
+    });
+  }
+
+  function showFriendGate() {
+    $('loading').classList.add('hidden');
+    $('friend-gate').classList.remove('hidden');
+  }
+  $('recheckBtn').addEventListener('click', function () { location.reload(); });
+
   liff.init({ liffId: LIFF_ID }).then(function () {
-    if (!liff.isLoggedIn()) { liff.login(); return; }
+    if (!liff.isLoggedIn()) { liff.login(); return null; }
     return liff.getProfile();
   }).then(function (p) {
-    if (!p) return;
+    if (!p) return null;
     profile = p;
     $('displayName').value = p.displayName;
-    loadActivities();
+    return checkFriendship();
+  }).then(function (result) {
+    if (result === null) return;                          // 未登入(導向登入中)
+    if (result === false) { showFriendGate(); return; }   // 非好友 → 擋住,要求先加好友
+    loadActivities();                                     // 已是好友(或放行)→ 進入報名
   }).catch(function (err) {
     $('loading').innerText = '初始化失敗,請確認是否從LINE開啟此頁面。錯誤訊息:' + err.message;
   });
