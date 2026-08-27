@@ -154,17 +154,17 @@
   function showFriendGate() {
     $('loading').classList.add('hidden');
     $('friend-gate').classList.remove('hidden');
-    // 加好友、切回本頁後自動重新檢查;已成為好友就直接進報名頁
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState !== 'visible') return;
-      checkFriendship().then(function (ok) {
-        if (ok) {
-          $('friend-gate').classList.add('hidden');
-          $('loading').classList.remove('hidden');
-          loadActivities();
-        }
-      });
-    });
+    // 加好友、切回本頁後,重新「載入頁面」重新判斷(同一工作階段內查好友會讀到舊狀態,重新載入才會拿到最新)
+    var handled = false;
+    function reloadWhenBack() {
+      if (handled) return;
+      if (document.visibilityState === 'visible') {
+        handled = true;
+        setTimeout(function () { location.reload(); }, 1200);
+      }
+    }
+    document.addEventListener('visibilitychange', reloadWhenBack);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) reloadWhenBack(); });
   }
 
   liff.init({ liffId: LIFF_ID }).then(function () {
