@@ -164,6 +164,12 @@
   var API_URL = 'https://script.google.com/macros/s/AKfycbwe9-WFZqJqpzdgR_Y5xABdp8WJ2NRUqJSK9E_HDNHwToseHqPhVk_xpKq5A6YSYrYv/exec';  // Google Apps Script 部署後的網址
   // ============================
 
+  // 各活動的地點圖片(檔案放在 img/ 資料夾;鍵 = 活動ID)
+  var ACTIVITY_IMAGES = {
+    'A001': 'img/venue-a.jpg',  // 場次一・共享空間
+    'A002': 'img/venue-b.jpg'   // 場次二・超級巨星 KTV
+  };
+
   var profile = { userId: '', displayName: '' };
   var activities = [];
   var selectedActivity = null;
@@ -238,7 +244,8 @@
 
     var slotText = (a.剩餘名額 === null || a.剩餘名額 === undefined || a.剩餘名額 === '') ? '不限名額' : ('剩餘 ' + a.剩餘名額 + ' 位');
 
-    var metaImg = a.圖片網址 ? ('<img class="meta-img" src="' + a.圖片網址 + '" alt="活動地點">') : '';
+    var imgSrc = ACTIVITY_IMAGES[a.活動ID] || a.圖片網址 || '';
+    var metaImg = imgSrc ? ('<img class="meta-img" src="' + imgSrc + '" alt="活動地點">') : '';
     var metaDesc = a.說明 ? ('<div class="meta-desc"><span class="meta-label">活動內容</span>' + a.說明 + '</div>') : '';
     $('activityMeta').innerHTML =
       metaImg +
