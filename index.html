@@ -65,11 +65,7 @@
   <div id="loading" class="card">載入中,請稍候...</div>
 
   <div id="friend-gate" class="card hidden" style="text-align:center;">
-    <div style="font-size:46px;">🐸</div>
-    <h3 style="margin:12px 0 6px;">報名前,請先加入官方帳號</h3>
-    <p style="font-size:14px; color:#5f5a48; line-height:1.75;">加入「美好台灣小草推廣協會」LINE 官方帳號後才能報名,也方便我們透過 LINE 通知你活動細節。</p>
-    <a class="btn" href="https://lin.ee/oovKr6B" target="_blank" rel="noopener">➕ 加入官方帳號好友</a>
-    <button class="btn" id="recheckBtn" style="background:#8a8264;">我已加入,點此繼續報名</button>
+    <a class="btn" href="https://lin.ee/oovKr6B" target="_blank" rel="noopener">➕ 加入好友</a>
   </div>
 
   <div id="form-view" class="hidden">
@@ -158,8 +154,18 @@
   function showFriendGate() {
     $('loading').classList.add('hidden');
     $('friend-gate').classList.remove('hidden');
+    // 加好友、切回本頁後自動重新檢查;已成為好友就直接進報名頁
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      checkFriendship().then(function (ok) {
+        if (ok) {
+          $('friend-gate').classList.add('hidden');
+          $('loading').classList.remove('hidden');
+          loadActivities();
+        }
+      });
+    });
   }
-  $('recheckBtn').addEventListener('click', function () { location.reload(); });
 
   liff.init({ liffId: LIFF_ID }).then(function () {
     if (!liff.isLoggedIn()) { liff.login(); return null; }
