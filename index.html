@@ -84,6 +84,9 @@
       <label>聯絡電話</label>
       <input type="tel" id="phone" placeholder="09xxxxxxxx（選填）">
 
+      <label class="required">LINE ID</label>
+      <input type="text" id="lineId" placeholder="請填寫您的 LINE ID,方便聯繫">
+
       <label class="required">身份別</label>
       <select id="role">
         <option value="萌蛙志工">萌蛙志工</option>
@@ -312,6 +315,8 @@
 
     if (selectedActs.length === 0) { showMsg('請至少選擇一個場次', 'error'); return; }
     if (!name) { showMsg('請填寫姓名', 'error'); return; }
+    var lineId = $('lineId').value.trim();
+    if (!lineId) { showMsg('請填寫 LINE ID', 'error'); return; }
 
     for (var i = 0; i < selectedActs.length; i++) {
       var a = selectedActs[i];
@@ -335,6 +340,7 @@
       fd.append('displayName', profile.displayName);
       fd.append('name', name);
       fd.append('phone', phone);
+      fd.append('lineId', lineId);
       fd.append('role', role);
       fd.append('countAdult', q.adult);
       fd.append('countChild', q.child);
