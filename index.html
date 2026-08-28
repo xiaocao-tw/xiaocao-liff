@@ -349,8 +349,8 @@
       fd.append('note', note);
       return fetch(API_URL, { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
-        .then(function (data) { return { activity: a, data: data }; })
-        .catch(function () { return { activity: a, data: { status: 'error', message: '網路發生問題' } }; });
+        .then(function (data) { return { activity: a, data: data, qty: q }; })
+        .catch(function () { return { activity: a, data: { status: 'error', message: '網路發生問題' }, qty: q }; });
     });
 
     Promise.all(tasks).then(function (results) {
@@ -369,7 +369,13 @@
       if (d.status !== 'success') {
         html = '<div class="res err"><h4>⚠️ ' + a.活動名稱 + ' 報名失敗</h4><div>' + (d.message || '請稍後再試') + '</div></div>';
       } else if (!d.needPayment) {
-        html = '<div class="res ok"><h4>✅ ' + a.活動名稱 + ' 報名成功</h4><div>免費活動,已完成報名。</div></div>';
+        html = '<div class="res ok"><h4>✅ ' + a.活動名稱 + ' 報名成功</h4>' +
+          '<div style="font-size:13.5px;line-height:1.8;margin:6px 0;color:#2f6b43;">' +
+          (a.日期時間說明 ? '🗓 ' + a.日期時間說明 + '<br>' : '') +
+          (a.地點 ? '📍 ' + a.地點 + '<br>' : '') +
+          '👥 報名人數:' + (r.qty ? r.qty.total : 1) + ' 位' +
+          '</div>' +
+          '<div style="font-size:13.5px;line-height:1.8;">📸 建議您截圖保存這則報名資訊。<br>期待當天與您相聚,一起度過美好的時光 🌱</div></div>';
       } else if (d.method === '轉帳' && d.transfer) {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・請完成銀行轉帳</h4>' +
           '<div class="amount">應繳 $' + d.amount + '</div>' +
