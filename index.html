@@ -43,6 +43,10 @@
   a.btn { display:block; text-align:center; text-decoration:none; line-height:1.5; }
   .msg { padding:12px; border-radius:8px; font-size:14px; margin-top:12px; }
   .msg.error { background:#fdeceb; color:#b3261e; }
+  .field-err { color:#d0342c; font-size:12.5px; font-weight:700; margin-top:5px; }
+  input.invalid, select.invalid, textarea.invalid { border-color:#d0342c; background:#fdeceb; }
+  .act.invalid { border-color:#d0342c; box-shadow:0 0 0 3px rgba(208,52,44,.12); }
+  #activityErr { display:none; color:#d0342c; font-size:13px; font-weight:700; margin-bottom:10px; }
   /* 結果頁 */
   .res { border-radius:12px; padding:14px; margin-bottom:12px; }
   .res:last-child { margin-bottom:0; }
@@ -71,6 +75,7 @@
   <div id="form-view" class="hidden">
     <div class="card">
       <div class="sec-title">選擇活動 <small>(可複選,能同時報名多個場次)</small></div>
+      <div id="activityErr">⚠️ 請至少選擇一個場次</div>
       <div id="activityList"></div>
     </div>
 
@@ -129,6 +134,26 @@
   var selected = {}; // 活動ID -> true/false
 
   function $(id) { return document.getElementById(id); }
+  function setErr(el, msg) {
+    if (!el) return;
+    el.classList.add('invalid');
+    var next = el.nextElementSibling;
+    if (!next || !next.classList.contains('field-err')) {
+      next = document.createElement('div');
+      next.className = 'field-err';
+      el.parentNode.insertBefore(next, el.nextSibling);
+    }
+    next.textContent = msg;
+    next.style.display = 'block';
+  }
+  function clearErr(el) {
+    if (!el) return;
+    el.classList.remove('invalid');
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains('field-err')) next.style.display = 'none';
+  }
+  $('name').addEventListener('input', function () { clearErr($('name')); });
+  $('lineId').addEventListener('input', function () { clearErr($('lineId')); });
   function isTrue(v) { return String(v).toUpperCase() === 'TRUE'; }
   function isCharged(a) { return !!a && isTrue(a.是否收費); }
   function isTiered(a) { return isCharged(a) && a.優待票說明 != null && String(a.優待票說明).trim() !== ''; }
@@ -253,7 +278,12 @@
     var id = a.活動ID;
     ['count_' + id, 'adult_' + id, 'child_' + id].forEach(function (fid) {
       var el = $(fid);
-      if (el) el.addEventListener('input', function () { updateSubtotal(a); updateGrandTotal(); });
+      if (el) el.addEventListener('input', function () {
+        clearErr(el);
+        var card = document.querySelector('.act[data-id="' + id + '"]');
+        if (card) card.classList.remove('invalid');
+        updateSubtotal(a); updateGrandTotal();
+      });
     });
   }
 
@@ -261,6 +291,8 @@
     var card = document.querySelector('.act[data-id="' + id + '"]');
     var a = activities.filter(function (x) { return String(x.活動ID) === String(id); })[0];
     selected[id] = !selected[id];
+    $('activityErr').style.display = 'none';
+    card.classList.remove('invalid');
     var btn = card.querySelector('.toggle');
     if (selected[id]) {
       card.classList.add('on');
@@ -311,21 +343,40 @@
   }
 
   $('submitBtn').addEventListener('click', function () {
-    var name = $('name').value.trim();
+    // 清除上一次的錯誤提示
+    $('activityErr').style.display = 'none';
+    clearErr($('name')); clearErr($('lineId'));
+    document.querySelectorAll('.act').forEach(function (c) { c.classList.remove('invalid'); });
+
     var selectedActs = activities.filter(function (a) { return selected[a.活動ID]; });
+    var firstInvalid = null;
+    function markFirst(el) { if (!firstInvalid && el) firstInvalid = el; }
 
-    if (selectedActs.length === 0) { showMsg('請至少選擇一個場次', 'error'); return; }
-    if (!name) { showMsg('請填寫姓名', 'error'); return; }
-    var lineId = $('lineId').value.trim();
-    if (!lineId) { showMsg('請填寫 LINE ID', 'error'); return; }
+    if (!$('name').value.trim()) { setErr($('name'), '⚠️ 請填寫姓名'); markFirst($('name')); }
+    if (!$('lineId').value.trim()) { setErr($('lineId'), '⚠️ 請填寫 LINE ID'); markFirst($('lineId')); }
+    if (selectedActs.length === 0) { $('activityErr').style.display = 'block'; markFirst($('activityErr')); }
 
-    for (var i = 0; i < selectedActs.length; i++) {
-      var a = selectedActs[i];
+    selectedActs.forEach(function (a) {
       var q = getQty(a);
-      if (!q.total || q.total < 1) { showMsg('「' + a.活動名稱 + '」請填寫參加人數', 'error'); return; }
-      if (isCharged(a) && !paymentOf(a)) { showMsg('「' + a.活動名稱 + '」請選擇付款方式', 'error'); return; }
+      var card = document.querySelector('.act[data-id="' + a.活動ID + '"]');
+      if (!q.total || q.total < 1) {
+        if (card) card.classList.add('invalid');
+        var qtyInput = isTiered(a) ? $('adult_' + a.活動ID) : $('count_' + a.活動ID);
+        if (qtyInput) setErr(qtyInput, '⚠️ 請填寫參加人數');
+        markFirst(qtyInput || card);
+      } else if (isCharged(a) && !paymentOf(a)) {
+        if (card) card.classList.add('invalid');
+        markFirst(card);
+      }
+    });
+
+    if (firstInvalid) {
+      if (firstInvalid.scrollIntoView) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
 
+    var name = $('name').value.trim();
+    var lineId = $('lineId').value.trim();
     var phone = $('phone').value.trim();
     var role = $('role').value;
     var note = $('note').value.trim();
