@@ -381,8 +381,8 @@
       } else if (d.method === 'LinePay' && d.linepay) {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・請用 LINE Pay 付款</h4>' +
           '<div class="amount">應付 $' + d.amount + '</div>' +
-          '<a class="btn" href="https://line.me/ti/p/~' + d.linepay.lineId + '" target="_blank" rel="noopener">➕ 加 LINE 好友付款</a>' +
-          '<div class="hint">繳費期限:' + d.linepay.deadline + '。付款請備註「姓名+電話末3碼」。</div></div>';
+          '<a class="btn" href="https://line.me/ti/p/~' + d.linepay.lineId + '" target="_blank" rel="noopener">➕ 加 楊紘子 LINE 好友付款</a>' +
+          '<div class="hint">繳費期限:' + d.linepay.deadline + '。LINE Pay 付款後請備註報名者「姓名」。</div></div>';
       } else if (d.method === '現場') {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・現場付款</h4>' +
           '<div class="amount">現場應繳 $' + d.amount + '</div>' +
