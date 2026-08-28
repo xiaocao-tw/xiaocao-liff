@@ -378,17 +378,27 @@
           '<div style="font-size:13.5px;line-height:1.8;">📸 建議您截圖保存這則報名資訊。<br>期待當天與您相聚,一起度過美好的時光 🌱</div></div>';
       } else if (d.method === '轉帳' && d.transfer) {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・請完成銀行轉帳</h4>' +
+          '<div style="font-size:13.5px;line-height:1.8;margin:6px 0;color:#7d7660;">' +
+          (a.日期時間說明 ? '🗓 ' + a.日期時間說明 + '<br>' : '') +
+          (a.地點 ? '📍 ' + a.地點 + '<br>' : '') +
+          '👥 報名人數:' + (r.qty ? r.qty.total : 1) + ' 位</div>' +
           '<div class="amount">應繳 $' + d.amount + '</div>' +
           '<div class="row"><span>銀行</span><span>' + d.transfer.bank + '</span></div>' +
           '<div class="row"><span>戶名</span><span>' + d.transfer.accountName + '</span></div>' +
           '<div class="row"><span>帳號</span><span>' + d.transfer.accountNumber + '</span></div>' +
           '<div class="row"><span>繳費期限</span><span>' + d.transfer.deadline + '</span></div>' +
-          '<div class="hint">轉帳後請回傳截圖或帳號後五碼對帳,備註填「姓名+電話末3碼」。</div></div>';
+          '<div class="hint">轉帳後請回傳截圖或帳號後五碼對帳,備註填「姓名+電話末3碼」。</div>' +
+          '<div style="font-size:13.5px;line-height:1.8;margin-top:10px;color:#2f6b43;">📸 建議截圖保存匯款資訊。<br>期待當天與您相聚,一起度過美好的時光 🌱</div></div>';
       } else if (d.method === 'LinePay' && d.linepay) {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・請用 LINE Pay 付款</h4>' +
+          '<div style="font-size:13.5px;line-height:1.8;margin:6px 0;color:#7d7660;">' +
+          (a.日期時間說明 ? '🗓 ' + a.日期時間說明 + '<br>' : '') +
+          (a.地點 ? '📍 ' + a.地點 + '<br>' : '') +
+          '👥 報名人數:' + (r.qty ? r.qty.total : 1) + ' 位</div>' +
           '<div class="amount">應付 $' + d.amount + '</div>' +
           '<a class="btn" href="https://line.me/ti/p/~' + d.linepay.lineId + '" target="_blank" rel="noopener">➕ 加 楊紘子 LINE 好友付款</a>' +
-          '<div class="hint">繳費期限:' + d.linepay.deadline + '。LINE Pay 付款後請備註報名者「姓名」。</div></div>';
+          '<div class="hint">繳費期限:' + d.linepay.deadline + '。LINE Pay 付款後請備註報名者「姓名」。</div>' +
+          '<div style="font-size:13.5px;line-height:1.8;margin-top:10px;color:#2f6b43;">期待當天與您相聚,一起度過美好的時光 🌱</div></div>';
       } else if (d.method === '現場') {
         html = '<div class="res pay"><h4>' + a.活動名稱 + '・現場付款</h4>' +
           '<div class="amount">現場應繳 $' + d.amount + '</div>' +
